@@ -1,616 +1,417 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Форсунка Шухова - Интерактивная симуляция</title>
-    <style>
-        :root {
-            --panel-bg: rgba(42, 42, 42, 0.85);
-            --text-color: #e0e0e0;
-            --accent-color: #ff8c00;
-            --steam-color: #4fc3f7;
-            --mazut-color: #3e2723;
-        }
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Форсунка Шухова</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: drawing sheet. Header on top, the nozzle section drawing on the left, a controls column with a title-block style status stamp on the right; stacks on phones. */
+:root{
+  --paper:#e6ecf0;
+  --panel:#d7e0e6;
+  --metal:#c3cfd7;
+  --metal2:#a6b5c0;
+  --ink:#10202b;
+  --line:#2e4a5e;
+  --muted:#566f80;
+  --accent:#d8371b;
+  --on-accent:#ffffff;
+  --warn:#e3a400;
+  --ok:#238a5f;
+  --mazut:#3b2418;
+  --steam:#2a7fb0;
+  --soot:#7a2410;
+  --dry:#e8801c;
+  --hot:#fff3c4;
+  --font:'Oswald','Arial Narrow','Helvetica Neue',Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0d1922;--panel:#162733;--metal:#27394a;--metal2:#1d2e3c;--ink:#e7eff4;--line:#86a9bf;--muted:#8aa1b0;
+    --accent:#ff6a47;--on-accent:#1a0a05;--warn:#f0b429;--ok:#3fbf88;--mazut:#c99a6b;--steam:#6ec6f0;--soot:#b4482a;--dry:#f09a3c;--hot:#fff3c4;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0d1922;--panel:#162733;--metal:#27394a;--metal2:#1d2e3c;--ink:#e7eff4;--line:#86a9bf;--muted:#8aa1b0;
+  --accent:#ff6a47;--on-accent:#1a0a05;--warn:#f0b429;--ok:#3fbf88;--mazut:#c99a6b;--steam:#6ec6f0;--soot:#b4482a;--dry:#f09a3c;--hot:#fff3c4;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.35;
+  padding-block:16px 32px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.tag{margin:0 0 4px;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+h1{margin:0;font-size:clamp(30px,6vw,52px);line-height:1;font-weight:700;letter-spacing:.01em;text-transform:uppercase;text-wrap:balance}
+.sub{margin:10px 0 0;max-width:68ch;font-size:18px;font-weight:300;line-height:1.45}
+.main{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:16px;align-items:start}
+.board{border:2px solid var(--ink);background:var(--panel);min-width:0}
+.board svg{display:block;width:100%;height:auto}
+.panel{display:flex;flex-direction:column;gap:18px;min-width:0}
+.ctl{display:flex;flex-direction:column;gap:6px}
+.ctl .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ctl label{font-size:15px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.ctl output{font-size:30px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;margin:0;background:transparent;cursor:pointer;touch-action:pan-y}
+input[type=range]::-webkit-slider-runnable-track{height:6px;background:linear-gradient(to right,var(--accent) var(--p,50%),var(--ink) var(--p,50%))}
+input[type=range]::-moz-range-track{height:6px;background:var(--ink)}
+input[type=range]::-moz-range-progress{height:6px;background:var(--accent)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-10px;background:var(--paper);border:3px solid var(--ink);border-radius:0}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;background:var(--paper);border:3px solid var(--ink);border-radius:0}
+input[type=range]:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.btn{
+  display:flex;align-items:center;justify-content:center;min-height:64px;padding:10px 16px;width:100%;
+  font-family:var(--font);font-size:20px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--paper);background:var(--ink);border:2px solid var(--ink);border-radius:2px;cursor:pointer;
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;
+}
+.btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.stamp{border:2px solid var(--ink);background:var(--paper);box-shadow:6px 6px 0 var(--accent)}
+.stamp h2{margin:0;padding:8px 12px;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;background:var(--ink);color:var(--paper)}
+.stamp .r{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;border-bottom:2px solid var(--ink)}
+.stamp .r span:first-child{font-size:13px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stamp .v{display:inline-flex;align-items:center;gap:8px;font-size:19px;font-weight:600;text-align:right}
+.stamp .v i{flex:none;width:12px;height:12px;background:var(--muted)}
+.stamp .v[data-t="ok"] i{background:var(--ok)}
+.stamp .v[data-t="warn"] i{background:var(--warn)}
+.stamp .v[data-t="bad"] i{background:var(--accent)}
+.ratio{padding:12px 12px 10px;border-bottom:2px solid var(--ink)}
+.ratio .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+.ratio .top span:first-child{font-size:13px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ratio .top b{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.scale{position:relative;display:flex;height:16px;border:2px solid var(--ink)}
+.scale s{display:block;height:100%;text-decoration:none}
+.scale .z1{width:12.5%;background:var(--accent);opacity:.55}
+.scale .z2{width:50%;background:var(--ok);opacity:.55}
+.scale .z3{flex:1;background:var(--warn);opacity:.55}
+.scale .mk{position:absolute;top:-6px;bottom:-6px;width:5px;margin-left:-2.5px;background:var(--ink);left:0;transition:left .2s}
+.scale-l{display:flex;margin-top:6px;font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.scale-l span{flex:none}
+.scale-l .a{width:12.5%}
+.scale-l .b{width:50%;text-align:center}
+.scale-l .c{flex:1;text-align:right}
+#feedback{margin:0;padding:12px;min-height:5.4em;font-size:16px;font-weight:400;line-height:1.4}
+.t{font-family:var(--font);font-weight:600;font-size:19px;letter-spacing:.12em;fill:var(--ink)}
+.t.m{font-size:15px;font-weight:500;fill:var(--muted)}
+.sv-bg{fill:var(--panel)}
+.sv-grid{fill:none;stroke:var(--line);stroke-opacity:.14;stroke-width:1}
+.body{fill:var(--metal);stroke:var(--ink);stroke-width:3}
+.body2{fill:var(--metal2);stroke:var(--ink);stroke-width:2.5}
+.cap{fill:var(--paper);stroke:var(--ink);stroke-width:2.5}
+.shine{stroke:var(--paper);stroke-opacity:.55;stroke-width:3;stroke-linecap:round}
+.axis{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:14 5 3 5}
+.lead{fill:none;stroke:var(--ink);stroke-width:2;marker-end:url(#ah)}
+.thin{fill:none;stroke:var(--muted);stroke-width:1.5}
+.ah{fill:var(--ink)}
+.rv{fill:var(--ink)}
+.win-m{fill:var(--mazut);opacity:.55}
+.win-s{fill:var(--steam);opacity:.55}
+.p-mazut,.p-coarse{fill:var(--mazut)}
+.p-steam{fill:var(--steam)}
+.p-fine{fill:var(--dry)}
+.flame{animation:flicker .2s infinite alternate}
+.flame .f{transform:scale(var(--fs,1));transform-box:fill-box;transform-origin:100% 50%;transition:transform .25s}
+.f1{fill:var(--accent)}
+.f2{fill:var(--warn)}
+.f3{fill:var(--hot)}
+.flame[data-flame="soot"] .f1{fill:var(--soot)}
+.flame[data-flame="lean"] .f1{fill:var(--warn)}
+.flame[data-flame="lean"] .f2{fill:var(--hot)}
+.flame[data-flame="dry"] .f1{fill:var(--dry)}
+@keyframes flicker{0%{opacity:.82}100%{opacity:1}}
+@media (max-width:820px){
+  .main{grid-template-columns:minmax(0,1fr)}
+  .sub{font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){
+  .flame{animation:none}
+  .flame .f,.scale .mk{transition:none}
+}
+</style>
 
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            overflow: hidden;
-        }
+<div class="wrap">
+  <header>
+    <p class="tag">В. Г. Шухов · интерактивная симуляция</p>
+    <h1>Форсунка Шухова (1874 г.)</h1>
+    <p class="sub">Владимир Шухов предложил распылять мазут горячим паром, чтобы увеличить площадь соприкосновения с воздухом. Настройте подачу пара и мазута для идеального горения.</p>
+  </header>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+  <div class="main">
+    <div class="board">
+      <svg viewBox="0 0 800 500" id="svg-canvas" role="img" aria-label="Разрез форсунки: вход мазута сверху, вход пара снизу, смесительная камера, выход слева">
+        <defs>
+          <marker id="ah" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon class="ah" points="0 0, 10 3.5, 0 7"/></marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path class="sv-grid" d="M 40 0 L 0 0 0 40"/></pattern>
+          <filter id="b4" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+          <filter id="b2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2"/></filter>
+        </defs>
+        <rect class="sv-bg" width="800" height="500"/>
+        <rect width="800" height="500" fill="url(#grid)"/>
 
-        /* Сцена 16:9 — фиксированный размер, масштабируется под экран */
-        .slide {
-            width: 1280px;
-            height: 720px;
-            transform-origin: center center;
-            display: flex;
-            flex-direction: column;
-            padding: 18px 26px;
-            box-sizing: border-box;
-            gap: 10px;
-        }
+        <!-- ось -->
+        <line class="axis" x1="40" y1="230" x2="780" y2="230"/>
 
-        .slide-header {
-            text-align: center;
-            flex-shrink: 0;
-        }
+        <!-- корпус -->
+        <rect class="body" x="150" y="200" width="500" height="60" rx="10"/>
+        <line class="shine" x1="165" y1="211" x2="635" y2="211"/>
 
-        .slide-header h1 {
-            margin: 0 0 6px;
-            color: var(--accent-color);
-            font-size: 1.65rem;
-            letter-spacing: 0.5px;
-        }
+        <!-- выходное сопло -->
+        <path class="body" d="M 150 200 L 100 215 L 100 245 L 150 260 Z"/>
+        <rect class="body2" x="80" y="215" width="20" height="30"/>
 
-        .slide-header .subtitle {
-            margin: 0 auto;
-            color: #b8b8b8;
-            font-size: 0.82rem;
-            line-height: 1.45;
-            max-width: 1050px;
-        }
+        <!-- вход мазута -->
+        <rect class="body" x="500" y="80" width="60" height="120"/>
+        <rect class="body2" x="490" y="60" width="80" height="20"/>
+        <rect class="win-m" x="510" y="120" width="40" height="20"/>
+        <circle class="rv" cx="498" cy="70" r="2.5"/><circle class="rv" cx="562" cy="70" r="2.5"/>
 
-        .main-container {
-            display: flex;
-            flex-direction: row;
-            gap: 18px;
-            flex: 1;
-            min-height: 0;
-        }
+        <!-- вход пара -->
+        <rect class="body" x="350" y="260" width="60" height="100"/>
+        <rect class="body2" x="340" y="360" width="80" height="20"/>
+        <rect class="win-s" x="360" y="280" width="40" height="20"/>
+        <circle class="rv" cx="348" cy="370" r="2.5"/><circle class="rv" cx="412" cy="370" r="2.5"/>
 
-        .simulation-area {
-            background-color: var(--panel-bg);
-            border-radius: 12px;
-            padding: 14px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-            flex: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 0;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-        }
+        <!-- смесительная камера -->
+        <rect class="cap" x="420" y="210" width="100" height="40"/>
 
-        .controls-area {
-            background-color: var(--panel-bg);
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            min-width: 0;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-        }
+        <!-- регулятор -->
+        <rect class="body2" x="650" y="210" width="80" height="40"/>
+        <rect class="cap" x="730" y="220" width="30" height="20"/>
+        <line class="thin" x1="730" y1="230" x2="760" y2="230"/>
 
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        <!-- метки -->
+        <text class="t" x="530" y="44" text-anchor="middle">МАЗУТ</text>
+        <line class="lead" x1="530" y1="52" x2="530" y2="74"/>
+        <text class="t" x="380" y="424" text-anchor="middle">ПАР</text>
+        <line class="lead" x1="380" y1="408" x2="380" y2="384"/>
+        <text class="t" x="120" y="172" text-anchor="middle">ВЫХОД</text>
+        <line class="lead" x1="120" y1="180" x2="120" y2="200"/>
+        <text class="t m" x="470" y="300" text-anchor="middle">СМЕСИТЕЛЬ</text>
+        <line class="thin" x1="470" y1="286" x2="470" y2="254"/>
+        <text class="t m" x="690" y="300" text-anchor="middle">РЕГУЛЯТОР</text>
+        <line class="thin" x1="690" y1="286" x2="690" y2="254"/>
 
-        .control-group label {
-            display: flex;
-            justify-content: space-between;
-            font-weight: bold;
-            font-size: 1rem;
-        }
+        <g id="particles-container"></g>
 
-        .control-group input[type="range"] {
-            width: 100%;
-            cursor: pointer;
-            accent-color: var(--accent-color);
-        }
-
-        .btn-ignite {
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            padding: 13px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .btn-ignite:hover {
-            background-color: #b71c1c;
-            transform: scale(1.02);
-        }
-
-        .btn-ignite.active {
-            background-color: #4caf50;
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
-        }
-
-        .status-panel {
-            background-color: rgba(20, 20, 20, 0.6);
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 14px;
-            margin-top: auto;
-        }
-
-        .status-panel h3 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: var(--accent-color);
-            font-size: 0.95rem;
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-        }
-
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-
-        .status-value {
-            font-weight: bold;
-        }
-
-        #feedback {
-            font-style: italic;
-            color: #aaa;
-            margin-top: 10px;
-            font-size: 0.85rem;
-            min-height: 36px;
-            line-height: 1.4;
-        }
-
-        svg {
-            width: 100%;
-            height: auto;
-            max-height: 100%;
-            display: block;
-        }
-
-        .label-text {
-            font-family: monospace;
-            font-size: 14px;
-            fill: #ccc;
-            user-select: none;
-        }
-
-        .label-arrow {
-            fill: none;
-            stroke: #ccc;
-            stroke-width: 2;
-            marker-end: url(#arrowhead);
-        }
-
-        @keyframes flicker {
-            0%   { opacity: 0.8; transform: scale(1); }
-            50%  { opacity: 1;   transform: scale(1.05); }
-            100% { opacity: 0.8; transform: scale(1); }
-        }
-
-        .flame {
-            animation: flicker 0.2s infinite alternate;
-            transform-origin: center;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="slide" id="slide">
-
-        <div class="slide-header">
-            <h1>Форсунка Шухова (1874 г.)</h1>
-            <p class="subtitle">
-                Владимир Шухов предложил распылять мазут горячим паром, чтобы увеличить площадь
-                соприкосновения с воздухом. Настройте подачу пара и мазута для идеального горения.
-            </p>
-        </div>
-
-        <div class="main-container">
-            <!-- Область симуляции -->
-            <div class="simulation-area">
-                <svg viewBox="0 0 800 500" id="svg-canvas">
-                    <defs>
-                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                            <polygon points="0 0, 10 3.5, 0 7" fill="#ccc" />
-                        </marker>
-                        <linearGradient id="pipeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#555" />
-                            <stop offset="50%" stop-color="#888" />
-                            <stop offset="100%" stop-color="#444" />
-                        </linearGradient>
-                        <linearGradient id="mazutGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#3e2723" />
-                            <stop offset="100%" stop-color="#1b0000" />
-                        </linearGradient>
-                    </defs>
-
-                    <!-- Фон / сетка -->
-                    <rect width="800" height="500" fill="#222" rx="8" />
-                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#333" stroke-width="1" />
-                    </pattern>
-                    <rect width="800" height="500" fill="url(#grid)" rx="8" />
-
-                    <!-- Корпус (труба) -->
-                    <rect x="150" y="200" width="500" height="60" rx="10" fill="url(#pipeGrad)" stroke="#111" stroke-width="4" />
-
-                    <!-- Выходное сопло -->
-                    <path d="M 150 200 L 100 215 L 100 245 L 150 260 Z" fill="#666" stroke="#111" stroke-width="4" />
-                    <rect x="80" y="215" width="20" height="30" fill="#444" stroke="#111" stroke-width="2" />
-
-                    <!-- Вход мазута -->
-                    <rect x="500" y="80" width="60" height="120" fill="#555" stroke="#111" stroke-width="4" />
-                    <rect x="490" y="60" width="80" height="20" fill="#444" stroke="#111" stroke-width="2" />
-                    <rect x="510" y="120" width="40" height="20" fill="var(--mazut-color)" opacity="0.5" />
-
-                    <!-- Вход пара -->
-                    <rect x="350" y="260" width="60" height="100" fill="#555" stroke="#111" stroke-width="4" />
-                    <rect x="340" y="360" width="80" height="20" fill="#444" stroke="#111" stroke-width="2" />
-                    <rect x="360" y="280" width="40" height="20" fill="var(--steam-color)" opacity="0.5" />
-
-                    <!-- Смесительная камера -->
-                    <rect x="420" y="210" width="100" height="40" fill="#333" stroke="#222" stroke-width="2" />
-
-                    <!-- Регулятор -->
-                    <rect x="650" y="210" width="80" height="40" fill="#555" stroke="#111" stroke-width="4" />
-                    <rect x="730" y="220" width="30" height="20" fill="#888" stroke="#111" stroke-width="2" />
-                    <line x1="730" y1="230" x2="760" y2="230" stroke="#ccc" stroke-width="2" />
-
-                    <!-- Метки -->
-                    <text x="520" y="50" class="label-text" text-anchor="middle">МАЗУТ</text>
-                    <line x1="530" y1="55" x2="530" y2="75" class="label-arrow" />
-
-                    <text x="380" y="420" class="label-text" text-anchor="middle">ПАР</text>
-                    <line x1="380" y1="410" x2="380" y2="380" class="label-arrow" />
-
-                    <text x="120" y="180" class="label-text" text-anchor="middle">ВЫХОД</text>
-                    <line x1="120" y1="185" x2="120" y2="200" class="label-arrow" />
-
-                    <!-- Частицы -->
-                    <g id="particles-container"></g>
-
-                    <!-- Пламя -->
-                    <g id="flame-container" class="flame" style="display: none;">
-                        <ellipse cx="90" cy="230" rx="40" ry="25" fill="#ff5722" opacity="0.6" filter="blur(4px)" />
-                        <ellipse cx="80" cy="230" rx="25" ry="15" fill="#ffeb3b" opacity="0.8" filter="blur(2px)" />
-                        <ellipse cx="70" cy="230" rx="15" ry="8" fill="#ffffff" opacity="0.9" />
-                    </g>
-                </svg>
-            </div>
-
-            <!-- Панель управления -->
-            <div class="controls-area">
-                <div class="control-group">
-                    <label>
-                        <span>Подача мазута</span>
-                        <span id="mazut-val" class="status-value">40%</span>
-                    </label>
-                    <input type="range" id="mazut-slider" min="0" max="100" value="40">
-                </div>
-
-                <div class="control-group">
-                    <label>
-                        <span>Давление пара</span>
-                        <span id="steam-val" class="status-value">60%</span>
-                    </label>
-                    <input type="range" id="steam-slider" min="0" max="100" value="60">
-                </div>
-
-                <button id="ignite-btn" class="btn-ignite">ЗАЖЕЧЬ</button>
-
-                <div class="status-panel">
-                    <h3>Состояние системы</h3>
-                    <div class="status-item">
-                        <span>Распыление:</span>
-                        <span id="atomization-status" class="status-value">Идеальное</span>
-                    </div>
-                    <div class="status-item">
-                        <span>Эффективность:</span>
-                        <span id="efficiency-status" class="status-value">Высокая</span>
-                    </div>
-                    <div id="feedback">
-                        Система готова к работе. Отрегулируйте подачу пара и мазута.
-                    </div>
-                </div>
-            </div>
-        </div>
+        <g id="flame-container" class="flame" data-flame="ideal" hidden>
+          <ellipse class="f f1" cx="90" cy="230" rx="40" ry="25" opacity="0.65" filter="url(#b4)"/>
+          <ellipse class="f f2" cx="80" cy="230" rx="25" ry="15" opacity="0.85" filter="url(#b2)"/>
+          <ellipse class="f f3" cx="70" cy="230" rx="15" ry="8" opacity="0.95"/>
+        </g>
+      </svg>
     </div>
 
-    <script>
-        // --- Масштабирование слайда под 16:9 экран ---
-        const slideEl = document.getElementById('slide');
-        function fitSlide() {
-            const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
-            slideEl.style.transform = `scale(${scale})`;
+    <div class="panel">
+      <div class="ctl">
+        <div class="row"><label for="mazut-slider">Подача мазута</label><output id="mazut-val" for="mazut-slider">40%</output></div>
+        <input type="range" id="mazut-slider" min="0" max="100" value="40">
+      </div>
+      <div class="ctl">
+        <div class="row"><label for="steam-slider">Давление пара</label><output id="steam-val" for="steam-slider">60%</output></div>
+        <input type="range" id="steam-slider" min="0" max="100" value="60">
+      </div>
+
+      <button id="ignite-btn" class="btn" type="button" aria-pressed="false">Зажечь</button>
+
+      <div class="stamp">
+        <h2>Состояние системы</h2>
+        <div class="r"><span>Распыление</span><span class="v" id="atomization-status" data-t="ok"><i></i><em style="font-style:normal">Идеальное</em></span></div>
+        <div class="r"><span>Эффективность</span><span class="v" id="efficiency-status" data-t="ok"><i></i><em style="font-style:normal">Высокая</em></span></div>
+        <div class="ratio">
+          <div class="top"><span>Пар к мазуту</span><b id="ratio-val">1,5</b></div>
+          <div class="scale" aria-hidden="true"><s class="z1"></s><s class="z2"></s><s class="z3"></s><span class="mk" id="ratio-mk"></span></div>
+          <div class="scale-l" aria-hidden="true"><span class="a">мало</span><span class="b">норма</span><span class="c">много</span></div>
+        </div>
+        <p id="feedback" role="status" aria-live="polite">Система готова к работе. Отрегулируйте подачу пара и мазута.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var state={mazutFlow:40,steamPressure:60,isIgnited:false,particles:[],lastSpawnTime:0,spawnInterval:50,lastFrameTime:0};
+
+var $=function(id){return document.getElementById(id);};
+var mazutSlider=$('mazut-slider'),steamSlider=$('steam-slider');
+var mazutVal=$('mazut-val'),steamVal=$('steam-val');
+var igniteBtn=$('ignite-btn');
+var atomEl=$('atomization-status'),effEl=$('efficiency-status');
+var feedback=$('feedback');
+var ratioVal=$('ratio-val'),ratioMk=$('ratio-mk');
+var particlesContainer=$('particles-container'),flameContainer=$('flame-container');
+
+var COORDS={
+  mazutInlet:{x:530,y:80},mazutChamber:{x:530,y:200},
+  steamInlet:{x:380,y:360},steamChamber:{x:380,y:240},
+  mixingChamber:{x:450,y:230},exit:{x:100,y:230}
+};
+
+function setPct(slider){
+  var p=(slider.value-slider.min)/(slider.max-slider.min)*100;
+  slider.style.setProperty('--p',p+'%');
+}
+function setStat(el,txt,tone){
+  el.setAttribute('data-t',tone);
+  el.lastElementChild.textContent=txt;
+}
+
+mazutSlider.addEventListener('input',function(e){
+  state.mazutFlow=parseInt(e.target.value,10);
+  mazutVal.textContent=state.mazutFlow+'%';
+  setPct(mazutSlider);updateStatus();
+});
+steamSlider.addEventListener('input',function(e){
+  state.steamPressure=parseInt(e.target.value,10);
+  steamVal.textContent=state.steamPressure+'%';
+  setPct(steamSlider);updateStatus();
+});
+igniteBtn.addEventListener('click',function(){
+  state.isIgnited=!state.isIgnited;
+  igniteBtn.textContent=state.isIgnited?'Погасить':'Зажечь';
+  igniteBtn.setAttribute('aria-pressed',state.isIgnited?'true':'false');
+  updateStatus();
+});
+
+function updateStatus(){
+  var m=state.mazutFlow,s=state.steamPressure;
+  var atom,atomTone,eff,effTone,msg,flame='ideal',scale=1;
+  var ratio=m>0?s/m:0;
+
+  if(m===0){
+    atom='Нет топлива';atomTone='bad';eff='0%';effTone='bad';
+    msg='Мазут не подается. Система пуста.';
+  }else if(s===0){
+    atom='Плохое (капли)';atomTone='bad';eff='Низкая';effTone='bad';
+    msg='Нет пара! Мазут не распыляется, горит медленно и коптит.';
+    flame='dry';scale=0.5;
+  }else if(ratio<0.5){
+    atom='Недостаточное';atomTone='bad';eff='Низкая';effTone='bad';
+    msg='Слишком мало пара. Мазут распыляется плохо, образуется много сажи.';
+    flame='soot';scale=0.7;
+  }else if(ratio>2.5){
+    atom='Избыточное';atomTone='warn';eff='Средняя';effTone='warn';
+    msg='Слишком много пара. Смесь переобеднена, пламя может срываться.';
+    flame='lean';scale=0.8;
+  }else{
+    atom='Идеальное';atomTone='ok';eff='Высокая';effTone='ok';
+    msg='Оптимальное соотношение! Мазут превращается в мелкую взвесь и горит ярко.';
+    flame='ideal';scale=1.2;
+  }
+  setStat(atomEl,atom,atomTone);
+  setStat(effEl,eff,effTone);
+  feedback.textContent=msg;
+
+  ratioVal.textContent=m>0?ratio.toFixed(1).replace('.',','):'—';
+  ratioMk.style.left=(m>0?Math.min(ratio,4)/4*100:0)+'%';
+  ratioMk.style.opacity=m>0?'1':'0.25';
+
+  if(state.isIgnited&&m>0){
+    flameContainer.removeAttribute('hidden');
+    flameContainer.setAttribute('data-flame',flame);
+    flameContainer.style.setProperty('--fs',scale);
+  }else{
+    flameContainer.setAttribute('hidden','');
+  }
+}
+
+function createParticle(type){
+  var p={type:type,x:0,y:0,vx:0,vy:0,life:1,size:5,cls:'p-mazut'};
+  if(type==='mazut'){
+    p.x=COORDS.mazutInlet.x+(Math.random()*20-10);
+    p.y=COORDS.mazutInlet.y;
+    p.vy=2+Math.random()*2;
+    p.size=4+Math.random()*3;
+    p.cls='p-mazut';
+  }else if(type==='steam'){
+    p.x=COORDS.steamInlet.x+(Math.random()*20-10);
+    p.y=COORDS.steamInlet.y;
+    p.vy=-(3+Math.random()*3);
+    p.size=3+Math.random()*2;
+    p.cls='p-steam';
+  }else if(type==='mix'){
+    p.x=COORDS.mixingChamber.x+(Math.random()*20-10);
+    p.y=COORDS.mixingChamber.y+(Math.random()*20-10);
+    var speed=2+(state.steamPressure/100)*6;
+    p.vx=-speed-Math.random()*2;
+    p.vy=(Math.random()*2-1);
+    if(state.steamPressure===0){
+      p.size=8+Math.random()*5;p.cls='p-coarse';
+    }else{
+      var ratio=state.steamPressure/(state.mazutFlow||1);
+      if(ratio<0.5){p.size=6+Math.random()*4;p.cls='p-coarse';}
+      else{p.size=2+Math.random()*3;p.cls='p-fine';}
+    }
+  }
+  return p;
+}
+function spawnParticles(){
+  var i,count;
+  if(state.mazutFlow>0){
+    count=Math.ceil(state.mazutFlow/20);
+    for(i=0;i<count;i++){state.particles.push(createParticle('mazut'));}
+  }
+  if(state.steamPressure>0){
+    count=Math.ceil(state.steamPressure/15);
+    for(i=0;i<count;i++){state.particles.push(createParticle('steam'));}
+  }
+}
+function updateParticles(dt){
+  var f=dt/16.67;
+  for(var i=state.particles.length-1;i>=0;i--){
+    var p=state.particles[i];
+    p.x+=p.vx*f;p.y+=p.vy*f;
+    if(p.type==='mazut'){
+      if(p.y>=COORDS.mazutChamber.y){
+        state.particles.splice(i,1);
+        if(state.steamPressure>0){
+          state.particles.push(createParticle('mix'));
+        }else{
+          var drip=createParticle('mix');
+          drip.vx=-1;drip.vy=1;drip.size=10;drip.cls='p-coarse';
+          state.particles.push(drip);
         }
-        window.addEventListener('resize', fitSlide);
-        fitSlide();
+        continue;
+      }
+    }else if(p.type==='steam'){
+      if(p.y<=COORDS.steamChamber.y){
+        state.particles.splice(i,1);
+        if(state.mazutFlow>0){state.particles.push(createParticle('mix'));}
+        continue;
+      }
+    }
+    if(p.x<-50||p.y<-50||p.y>550||p.life<=0){state.particles.splice(i,1);}
+  }
+}
+function renderParticles(){
+  var html='';
+  for(var i=0;i<state.particles.length;i++){
+    var p=state.particles[i];
+    var op=(p.type==='mix'&&state.isIgnited)?0.8:1;
+    html+='<circle class="'+p.cls+'" cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+p.size.toFixed(1)+'" opacity="'+op+'"/>';
+  }
+  particlesContainer.innerHTML=html;
+}
+function animate(ts){
+  if(!state.lastFrameTime){state.lastFrameTime=ts;}
+  var dt=Math.min(50,ts-state.lastFrameTime);
+  state.lastFrameTime=ts;
+  if(ts-state.lastSpawnTime>state.spawnInterval){spawnParticles();state.lastSpawnTime=ts;}
+  updateParticles(dt);
+  renderParticles();
+  requestAnimationFrame(animate);
+}
 
-        // --- Параметры симуляции ---
-        const state = {
-            mazutFlow: 40,
-            steamPressure: 60,
-            isIgnited: false,
-            particles: [],
-            lastSpawnTime: 0,
-            spawnInterval: 50,
-            lastFrameTime: 0
-        };
+setPct(mazutSlider);setPct(steamSlider);
+updateStatus();
+requestAnimationFrame(animate);
+})();
+</script>
 
-        // --- DOM ---
-        const mazutSlider = document.getElementById('mazut-slider');
-        const steamSlider = document.getElementById('steam-slider');
-        const mazutVal = document.getElementById('mazut-val');
-        const steamVal = document.getElementById('steam-val');
-        const igniteBtn = document.getElementById('ignite-btn');
-        const atomizationStatus = document.getElementById('atomization-status');
-        const efficiencyStatus = document.getElementById('efficiency-status');
-        const feedback = document.getElementById('feedback');
-        const particlesContainer = document.getElementById('particles-container');
-        const flameContainer = document.getElementById('flame-container');
-
-        // --- Координаты ---
-        const COORDS = {
-            mazutInlet: { x: 530, y: 80 },
-            mazutChamber: { x: 530, y: 200 },
-            steamInlet: { x: 380, y: 360 },
-            steamChamber: { x: 380, y: 240 },
-            mixingChamber: { x: 450, y: 230 },
-            exit: { x: 100, y: 230 }
-        };
-
-        // --- События ---
-        mazutSlider.addEventListener('input', (e) => {
-            state.mazutFlow = parseInt(e.target.value);
-            mazutVal.textContent = state.mazutFlow + '%';
-            updateStatus();
-        });
-
-        steamSlider.addEventListener('input', (e) => {
-            state.steamPressure = parseInt(e.target.value);
-            steamVal.textContent = state.steamPressure + '%';
-            updateStatus();
-        });
-
-        igniteBtn.addEventListener('click', () => {
-            state.isIgnited = !state.isIgnited;
-            if (state.isIgnited) {
-                igniteBtn.textContent = 'ПОГАСИТЬ';
-                igniteBtn.classList.add('active');
-                flameContainer.style.display = 'block';
-            } else {
-                igniteBtn.textContent = 'ЗАЖЕЧЬ';
-                igniteBtn.classList.remove('active');
-                flameContainer.style.display = 'none';
-            }
-            updateStatus();
-        });
-
-        // --- Логика статуса ---
-        function updateStatus() {
-            const m = state.mazutFlow;
-            const s = state.steamPressure;
-
-            let atomization = "Отсутствует";
-            let efficiency = "0%";
-            let msg = "";
-
-            if (m === 0) {
-                atomization = "Нет топлива";
-                efficiency = "0%";
-                msg = "Мазут не подается. Система пуста.";
-            } else if (s === 0) {
-                atomization = "Плохое (капли)";
-                efficiency = "Низкая";
-                msg = "Нет пара! Мазут не распыляется, горит медленно и коптит.";
-            } else {
-                const ratio = s / m;
-                if (ratio < 0.5) {
-                    atomization = "Недостаточное";
-                    efficiency = "Низкая";
-                    msg = "Слишком мало пара. Мазут распыляется плохо, образуется много сажи.";
-                } else if (ratio > 2.5) {
-                    atomization = "Избыточное";
-                    efficiency = "Средняя";
-                    msg = "Слишком много пара. Смесь переобеднена, пламя может срываться.";
-                } else {
-                    atomization = "Идеальное";
-                    efficiency = "Высокая";
-                    msg = "Оптимальное соотношение! Мазут превращается в мелкую взвесь и горит ярко.";
-                }
-            }
-
-            atomizationStatus.textContent = atomization;
-            efficiencyStatus.textContent = efficiency;
-            feedback.textContent = msg;
-
-            if (state.isIgnited) {
-                let scale = 1;
-                let color = '#ff5722';
-
-                if (m === 0) {
-                    flameContainer.style.display = 'none';
-                } else {
-                    flameContainer.style.display = 'block';
-                    if (s === 0) {
-                        scale = 0.5;
-                        color = '#ff9800';
-                    } else {
-                        const ratio = s / m;
-                        if (ratio < 0.5) {
-                            scale = 0.7;
-                            color = '#d84315';
-                        } else if (ratio > 2.5) {
-                            scale = 0.8;
-                            color = '#ffeb3b';
-                        } else {
-                            scale = 1.2;
-                            color = '#ff5722';
-                        }
-                    }
-                }
-
-                const flameEllipses = flameContainer.querySelectorAll('ellipse');
-                flameEllipses.forEach((el, index) => {
-                    if (index === 0) el.setAttribute('fill', color);
-                    el.style.transform = `scale(${scale})`;
-                });
-            }
-        }
-
-        // --- Частицы ---
-        function createParticle(type) {
-            const p = {
-                type: type,
-                x: 0, y: 0,
-                vx: 0, vy: 0,
-                life: 1,
-                size: 5,
-                color: '#fff'
-            };
-
-            if (type === 'mazut') {
-                p.x = COORDS.mazutInlet.x + (Math.random() * 20 - 10);
-                p.y = COORDS.mazutInlet.y;
-                p.vx = 0;
-                p.vy = 2 + Math.random() * 2;
-                p.size = 4 + Math.random() * 3;
-                p.color = '#3e2723';
-            } else if (type === 'steam') {
-                p.x = COORDS.steamInlet.x + (Math.random() * 20 - 10);
-                p.y = COORDS.steamInlet.y;
-                p.vx = 0;
-                p.vy = -(3 + Math.random() * 3);
-                p.size = 3 + Math.random() * 2;
-                p.color = '#4fc3f7';
-            } else if (type === 'mix') {
-                p.x = COORDS.mixingChamber.x + (Math.random() * 20 - 10);
-                p.y = COORDS.mixingChamber.y + (Math.random() * 20 - 10);
-
-                const speed = 2 + (state.steamPressure / 100) * 6;
-                p.vx = -speed - Math.random() * 2;
-                p.vy = (Math.random() * 2 - 1);
-
-                if (state.steamPressure === 0) {
-                    p.size = 8 + Math.random() * 5;
-                    p.color = '#1b0000';
-                } else {
-                    const ratio = state.steamPressure / (state.mazutFlow || 1);
-                    if (ratio < 0.5) {
-                        p.size = 6 + Math.random() * 4;
-                        p.color = '#2a1a17';
-                    } else {
-                        p.size = 2 + Math.random() * 3;
-                        p.color = '#ffb74d';
-                    }
-                }
-            }
-
-            return p;
-        }
-
-        function spawnParticles() {
-            if (state.mazutFlow > 0) {
-                const count = Math.ceil(state.mazutFlow / 20);
-                for (let i = 0; i < count; i++) {
-                    state.particles.push(createParticle('mazut'));
-                }
-            }
-            if (state.steamPressure > 0) {
-                const count = Math.ceil(state.steamPressure / 15);
-                for (let i = 0; i < count; i++) {
-                    state.particles.push(createParticle('steam'));
-                }
-            }
-        }
-
-        function updateParticles(dt) {
-            const speedFactor = dt / 16.67;
-
-            for (let i = state.particles.length - 1; i >= 0; i--) {
-                const p = state.particles[i];
-
-                p.x += p.vx * speedFactor;
-                p.y += p.vy * speedFactor;
-
-                if (p.type === 'mazut') {
-                    if (p.y >= COORDS.mazutChamber.y) {
-                        state.particles.splice(i, 1);
-                        if (state.steamPressure > 0) {
-                            state.particles.push(createParticle('mix'));
-                        } else {
-                            const drip = createParticle('mix');
-                            drip.vx = -1;
-                            drip.vy = 1;
-                            drip.size = 10;
-                            drip.color = '#1b0000';
-                            state.particles.push(drip);
-                        }
-                        continue;
-                    }
-                } else if (p.type === 'steam') {
-                    if (p.y <= COORDS.steamChamber.y) {
-                        state.particles.splice(i, 1);
-                        if (state.mazutFlow > 0) {
-                            state.particles.push(createParticle('mix'));
-                        }
-                        continue;
-                    }
-                }
-
-                if (p.x < -50 || p.y < -50 || p.y > 550 || p.life <= 0) {
-                    state.particles.splice(i, 1);
-                }
-            }
-        }
-
-        function renderParticles() {
-            let html = '';
-            for (let p of state.particles) {
-                let opacity = 1;
-                if (p.type === 'mix' && state.isIgnited) opacity = 0.8;
-                html += `<circle cx="${p.x}" cy="${p.y}" r="${p.size}" fill="${p.color}" opacity="${opacity}" />`;
-            }
-            particlesContainer.innerHTML = html;
-        }
-
-        // --- Цикл анимации ---
-        function animate(timestamp) {
-            if (!state.lastFrameTime) state.lastFrameTime = timestamp;
-            const dt = timestamp - state.lastFrameTime;
-            state.lastFrameTime = timestamp;
-
-            if (timestamp - state.lastSpawnTime > state.spawnInterval) {
-                spawnParticles();
-                state.lastSpawnTime = timestamp;
-            }
-
-            updateParticles(dt);
-            renderParticles();
-
-            requestAnimationFrame(animate);
-        }
-
-        requestAnimationFrame(animate);
-        updateStatus();
-    </script>
-</body>
-</html>
+</body></html>
